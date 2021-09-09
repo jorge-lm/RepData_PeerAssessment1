@@ -1,25 +1,97 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Curso1"
+author: "Jorge L."
+date: "9/8/2021"
+output: html_document
 ---
 
+My first Homework
+======================================
 
+This is a firts R Markdown, to the course Reproducible Research in Coursera
+
+Cherger the libraries
+```{r}
+library(dplyr)
+library(ggplot2)
+```
 ## Loading and preprocessing the data
 
-
+```{r}
+data_raw<-read.csv("/Users/jorgelimas/Documents/MOOCs/COURSERA/Data Science (Specialized) -The John Hopkins University/5. Reproducible Research/activity.csv",sep=",")
+data_raw$date<-as.Date(data_raw$date)
+View(data_raw)
+```
 
 ## What is mean total number of steps taken per day?
 
+Histogram
 
+```{r}
+data_raw_2<-data_raw %>% group_by(date) %>% summarise(steps_sum=sum(steps))
+hist_data<-ggplot(data_raw_2,aes(x=steps_sum))+geom_histogram(bins = 7)+labs(title="Histogram of steps for day")
+hist_data                  
+```
+
+Mean and Median of steps for day
+```{r cars}
+data_3<-data_raw %>% group_by(date) %>% summarise(mean=mean(steps),median=median(steps))
+data_3
+```
+Summary of steps total data
+```{r}
+summary(data_raw$steps)
+```
 
 ## What is the average daily activity pattern?
+Time series plot of the average number of steps taken
+````{r}
 
+data_4<-aggregate(x=list(mean=data_raw$steps), by=list(interval=data_raw$interval), FUN=mean, na.rm=TRUE)
+ggplot(data_4,aes(x=interval,y=mean))+geom_line()+labs(title="Average number of steps taken")
+`````
+The 5-minute interval that, on average, contains the maximum number of steps
 
+```{r}
+as.data.frame(data_4) %>% select(interval,mean) %>%filter(mean==max(data_4$mean))
+```
 
 ## Imputing missing values
+Code to describe and show a strategy for imputing missing data
+```{r}
+sum(is.na(data_raw$steps))
+```
 
+Replace missing values
+```{r}
+new_column<-ifelse(is.na(data_raw$steps)=="TRUE",0,data_raw$steps)
+```
+New dataframe
+```{r}
+new_data_frame<- data_raw %>% mutate(steps=new_column)
+rbind(head(new_data_frame),tail(new_data_frame))
+```
+
+Create the new data with total steps
+
+```{r}
+steps_total <- data_raw %>% group_by(date) %>% summarise(total=sum(steps))
+head(steps_total)
+ggplot(steps_total, aes(x=total))+geom_histogram(bins = 7)+labs(title="Histogram de full steps")
+```
+
+```{r}
+summary(steps_total$total)
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+data_6<-data_raw %>% mutate(week_day=ifelse(weekdays(data_raw$date)=="Saturday" |weekdays(data_raw$date)=="Sunday","weekend","weekday"))
+week_data<-aggregate(steps~ interval+week_day, data_6, mean)
+head(week_data)
+```
+
+```{r}
+ggplot(week_data,aes(x=interval,y=steps,group=week_day))+geom_line()+facet_grid(week_day ~.)
+```
